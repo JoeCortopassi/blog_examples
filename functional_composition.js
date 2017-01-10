@@ -40,19 +40,25 @@ const capitalize = name => {
   const first = split[0].charAt(0).toUpperCase() + split[0].substring(1);
   const last = split[1].charAt(0).toUpperCase() + split[1].substring(1);
   return first + ' ' + last;
-}
+};
 
 const swap = name => {
   const split = name.split(" ");
   return split[1] + ", " + split[0];
-}
+};
+
+const createDisplayName = obj => {
+  const copy = Object.assign({}, obj);
+  copy['displayName'] = copy.firstName + ' ' + copy.lastName;
+  return copy;
+};
 
 const displayAge = age => age.replace(/[^0-9]/g, "") + " years old";
 
 
 // helpers
-const compose = (a,b) => (...args) => a(b(...args));
-const modifyProp = (func, prop) => obj => {
+const compose = (a,b) => (...args) => b(a(...args));
+const modifyProp = prop => func => obj => {
   const copyObj = Object.assign({}, obj);
   copyObj[prop] = func(copyObj[prop]);
   return copyObj;
@@ -60,10 +66,14 @@ const modifyProp = (func, prop) => obj => {
   
 
 // compositions
-const displayName = compose(capitalize, swap);
-const modifyName = modifyProp(displayName, "name"); 
+const modifyDisplayName = modifyProp("displayName"); // create curry function for modifying single prop
+const displayNameSwap = modifyDisplayName(swap); // finish the curry with the modifier 
+const displayNameCapitalize = modifyDisplayName(capitalize); // reuse the curry to create another modifier 
+const displayName = compose(capitalize, swap);  // example with only two 
+const formattedDisplayName = [createDisplayName, displayNameSwap, displayNameCapitalize].reduce(compose);  // example with arbitrary number 
 
 
 // examples
-console.log("display name", setA.map(displayName));
-console.log("modify name", setB.map(modifyName)); 
+console.log("\ndisplay name\n", setA.map(displayName));
+console.log("\ncreate display name\n", setB.map(createDisplayName)); 
+console.log("\ncreate formatted display name\n", setB.map(formattedDisplayName)); 
